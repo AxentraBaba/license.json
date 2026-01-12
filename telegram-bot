@@ -1,0 +1,36 @@
+import os
+from telegram import Update
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
+from flask import Flask
+import threading
+
+TOKEN = os.getenv("8444472609:AAGuvazsikXGTb262Hw9MBI15eZflh-dw-o")
+ADMIN_ID = int(os.getenv("8561815348"))
+
+flask_app = Flask(__name__)
+
+@flask_app.route("/")
+def home():
+    return "Bot aktif"
+
+def run_flask():
+    flask_app.run(host="0.0.0.0", port=10000)
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("✅ Destek aktif. Mesajını yazabilirsin.")
+
+async def user_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    text = update.message.text
+
+    await context.bot.send_message(
+        chat_id=ADMIN_ID,
+        text=f"📩 Yeni Mesaj\n👤 {user.first_name}\n🆔 {user.id}\n\n{text}"
+    )
+
+app = ApplicationBuilder().token(TOKEN).build()
+app.add_handler(CommandHandler("start", start))
+app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, user_message))
+
+threading.Thread(target=run_flask).start()
+app.run_polling()
